@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Velora Bank | Fraud Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <aside class="brand-panel">
+        <div class="brand-topbar">
+          <div class="brand-mark">V</div>
+          <div>
+            <p class="eyebrow">private banking</p>
+            <h1>Velora Bank</h1>
+          </div>
+        </div>
+
+        <div class="brand-copy">
+          <p class="kicker">Fraud intelligence platform</p>
+          <h2>Banking security designed for the next decade.</h2>
+          <p>
+            Monitor transactions, classify suspicious activity, and resolve fraud cases in one intelligent control center.
+          </p>
+          <p class="simulation-notice">Simulation only: no real money moves or police reports are submitted. {% if config.get('SMS_MODE') == 'msg91' %}Phone alerts use MSG91; delivery depends on provider/carrier confirmation.{% else %}Phone alerts are simulated until MSG91 is configured.{% endif %}</p>
+        </div>
+
+        <div class="mini-stats">
+          <div class="mini-stat">
+            <span>Access roles</span>
+            <strong>02</strong>
+          </div>
+          <div class="mini-stat">
+            <span>Risk engine</span>
+            <strong>ML + rules</strong>
+          </div>
+          <div class="mini-stat">
+            <span>Phone alerts</span>
+            <strong>{{ 'MSG91 enabled' if config.get('SMS_MODE') == 'msg91' else 'Simulated' }}</strong>
+          </div>
+        </div>
+      </aside>
+
+      <main class="app-panel">
+        <div id="authScreen" class="auth-screen active">
+          <div class="auth-card">
+            <div class="tab-bar">
+              <button class="tab-button active" data-tab="login">Login</button>
+              <button class="tab-button" data-tab="register">Create account</button>
+            </div>
+
+            <form id="loginForm" class="auth-form active">
+              <p class="small-muted">Customers and bank admins sign in here with their registered email or phone.</p>
+              <div class="field-row">
+                <label for="loginIdentifier">Customer or admin email/phone</label>
+                <input id="loginIdentifier" type="text" placeholder="Enter your registered email or phone" required />
+              </div>
+              <div class="field-row">
+                <label for="loginPassword">Password</label>
+                <input id="loginPassword" type="password" placeholder="••••••••" required />
+              </div>
+              <button class="primary-button" type="submit">Access dashboard</button>
+            </form>
+
+            <form id="registerForm" class="auth-form">
+              <div class="field-row">
+                <label for="registerName">Full name</label>
+                <input id="registerName" type="text" placeholder="Aarav Mehta" />
+              </div>
+
+              <div class="two-col">
+                <div class="field-row">
+                  <label for="registerEmail">Email</label>
+                  <input id="registerEmail" type="email" placeholder="name@velora.bank" />
+                </div>
+                <div class="field-row">
+                  <label for="registerPhone">Phone</label>
+                  <input id="registerPhone" type="tel" placeholder="+91 98765 43210" />
+                </div>
+              </div>
+
+              <div class="field-row">
+                <label for="registerAddress">Address</label>
+                <input id="registerAddress" type="text" placeholder="Bengaluru, India" />
+              </div>
+
+              <div class="field-row">
+                <label for="registerPassword">Password</label>
+                <input id="registerPassword" type="password" placeholder="Minimum 8 characters" />
+              </div>
+
+              <button class="primary-button" type="submit">Create customer account</button>
+              <p class="small-muted">Bank admin accounts are provisioned separately and cannot be created through customer registration.</p>
+            </form>
+          </div>
+        </div>
+
+        <div id="dashboardScreen" class="dashboard-shell hidden">
+          <header class="topbar">
+            <div>
+              <p class="eyebrow" id="dashboardRoleLabel">Customer dashboard</p>
+              <h3 id="welcomeTitle">Welcome back</h3>
+            </div>
+            <div class="topbar-actions">
+              <button class="soft-button" id="refreshDataBtn">Refresh</button>
+              <button class="dark-button" id="logoutBtn">Logout</button>
+            </div>
+          </header>
+
+          <div id="adminHomeView">
+            <section class="overview-grid" id="overviewGrid"></section>
+
+            <section class="panel analytics-panel" id="analyticsPanel"></section>
+
+            <section class="panel admin-directory-panel hidden" id="adminDirectoryPanel">
+              <div class="panel-header">
+                <h4>Customer directory &amp; fraud watch</h4>
+              </div>
+              <div id="adminOverviewChart" class="risk-watch"></div>
+              <input id="adminCustomerSearch" class="filter-input" type="search" placeholder="Search customers by name, email, or phone" />
+              <div id="adminDirectoryList" class="directory-list"></div>
+            </section>
+          </div>
+
+          <section id="adminProfileView" class="hidden">
+            <div class="panel-header profile-navigation">
+              <button class="soft-button" id="backToCustomerDirectory">← Back to customer directory</button>
+            </div>
+            <div id="adminCustomerDetail" class="customer-detail-card"></div>
+            <section class="panel profile-cases-panel">
+              <div class="panel-header"><h4>Fraud case actions</h4></div>
+              <div id="adminProfileCases" class="table-list"></div>
+            </section>
+            <section class="panel profile-cases-panel">
+              <div class="panel-header"><h4>Messages with this customer</h4></div>
+              <div id="adminConversation" class="conversation-list"></div>
+              <form id="adminMessageForm" class="conversation-form">
+                <select id="adminMessageCase" aria-label="Link reply to a case">
+                  <option value="">General message</option>
+                </select>
+                <textarea id="adminMessageText" maxlength="2000" placeholder="Reply to the customer" required></textarea>
+                <button class="primary-button" type="submit">Send reply</button>
+              </form>
+            </section>
+          </section>
+
+          <div id="customerWorkspace">
+          <section class="content-grid">
+            <div class="panel">
+              <div class="panel-header">
+                <h4>Account overview</h4>
+                <button class="soft-button" id="toggleAccountForm">New account</button>
+              </div>
+              <form id="accountForm" class="inline-form hidden">
+                <input id="accountNumber" type="text" placeholder="Account number" />
+                <input id="accountType" type="text" placeholder="Savings / Current" />
+                <input id="accountBalance" type="number" step="0.01" placeholder="Balance" />
+                <button class="primary-button" type="submit">Create</button>
+              </form>
+              <div id="accountList" class="info-list"></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <h4>Cards</h4>
+                <button class="soft-button" id="toggleCardForm">Add card</button>
+              </div>
+              <form id="cardForm" class="inline-form hidden">
+                <input id="cardType" type="text" placeholder="Visa / MasterCard" />
+                <input id="cardLastFour" type="text" maxlength="4" placeholder="Last 4" />
+                <input id="cardMonth" type="text" maxlength="2" placeholder="MM" />
+                <input id="cardYear" type="text" maxlength="4" placeholder="YYYY" />
+                <button class="primary-button" type="submit">Add</button>
+              </form>
+              <div id="cardList" class="card-stack"></div>
+            </div>
+          </section>
+
+          <section class="content-grid second-row">
+            <div class="panel wide-panel">
+              <div class="panel-header">
+                <h4>Recent transactions</h4>
+              </div>
+              <div id="adminTransactionFilters" class="transaction-filters hidden">
+                <input id="transactionSearch" class="filter-input" type="search" placeholder="Search customer, merchant, or location" />
+                <select id="transactionDirection" class="filter-select">
+                  <option value="ALL">All flows</option>
+                  <option value="DEBIT">Debits</option>
+                  <option value="CREDIT">Credits</option>
+                </select>
+                <select id="transactionRisk" class="filter-select">
+                  <option value="ALL">All risk levels</option>
+                  <option value="HIGH">High risk</option>
+                  <option value="MEDIUM">Medium risk</option>
+                  <option value="LOW">Low risk</option>
+                </select>
+              </div>
+              <form id="transactionForm" class="inline-form transaction-form">
+                <select id="transactionCardId">
+                  <option value="">Choose an active card</option>
+                </select>
+                <input id="transactionAmount" type="number" step="0.01" placeholder="Amount" />
+                <input id="transactionMerchant" type="text" placeholder="Merchant" />
+                <input id="transactionLocation" type="text" placeholder="Location" />
+                <select id="transactionType" aria-label="Transaction type">
+                  <option value="debit">Debit · money leaving account</option>
+                  <option value="credit">Credit · money entering account</option>
+                </select>
+                <button class="primary-button" type="submit">Process</button>
+              </form>
+              
+              <div id="transactionList" class="table-list"></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <h4>Fraud alerts</h4>
+                <span id="alertCount" class="badge status">0 alerts · 0 open</span>
+              </div>
+              <div id="alertList" class="stack-list"></div>
+            </div>
+          </section>
+
+          <section class="content-grid second-row">
+            <div class="panel wide-panel">
+              <div class="panel-header">
+                <h4 id="casesHeading">Your fraud cases</h4>
+              </div>
+              <div id="caseList" class="table-list"></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <h4>Notifications</h4>
+              </div>
+              <div id="notificationList" class="stack-list"></div>
+            </div>
+          </section>
+
+          <section class="panel customer-messages-panel">
+            <div class="panel-header">
+              <h4>Talk to the bank</h4>
+            </div>
+            <div id="customerConversation" class="conversation-list"></div>
+            <form id="customerMessageForm" class="conversation-form">
+              <div class="two-col">
+                <select id="customerMessageCase" aria-label="Related fraud case">
+                  <option value="">No related case</option>
+                </select>
+                <select id="customerMessageCardAction" aria-label="Card action request">
+                  <option value="NONE">No card action requested</option>
+                  <option value="HOLD">Request temporary hold</option>
+                  <option value="BLOCKED">Request card block</option>
+                </select>
+              </div>
+              <select id="customerMessageCard" aria-label="Card for requested action">
+                <option value="">Select card for a hold/block request</option>
+              </select>
+              <textarea id="customerMessageText" maxlength="2000" placeholder="Ask about a transaction or tell the bank what help you need" required></textarea>
+              <button class="primary-button" type="submit">Send message</button>
+              <p class="small-muted">Card requests are sent to bank staff for action; sending a message does not change card status automatically.</p>
+            </form>
+          </section>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js', v='20261008-customer-transaction-review') }}"></script>
+  </body>
+</html>
